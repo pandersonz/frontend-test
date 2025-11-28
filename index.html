@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Panel: Productos, Empleados, Clientes</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background: #f4f5fb;
+      color: #222;
+    }
+
+    .app-container {
+      max-width: 1100px;
+      margin: 40px auto;
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+      padding: 24px 28px 32px;
+    }
+
+    h1 {
+      margin-top: 0;
+      margin-bottom: 4px;
+      font-size: 24px;
+    }
+
+    .subtitle {
+      margin: 0 0 20px;
+      font-size: 14px;
+      color: #666;
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      gap: 8px;
+      border-bottom: 1px solid #e3e4ec;
+      margin-bottom: 16px;
+    }
+
+    .tab-btn {
+      border: none;
+      background: transparent;
+      padding: 10px 16px;
+      border-radius: 999px 999px 0 0;
+      font-size: 14px;
+      cursor: pointer;
+      color: #555;
+      position: relative;
+      top: 1px;
+      transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+    }
+
+    .tab-btn.active {
+      background: #fff;
+      color: #1a4fd8;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+      border-bottom: 2px solid #fff;
+      font-weight: 600;
+    }
+
+    .tab-btn:not(.active):hover {
+      background: #eef1ff;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    .tab-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 2.2fr) minmax(280px, 1.2fr);
+      gap: 20px;
+    }
+
+    @media (max-width: 900px) {
+      .tab-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+      background: #fafbff;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    thead {
+      background: #1a4fd8;
+      color: #fff;
+    }
+
+    th, td {
+      padding: 10px 12px;
+      text-align: left;
+      border-bottom: 1px solid #e1e3f0;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tbody tr:nth-child(even) {
+      background: #f2f4ff;
+    }
+
+    tbody tr:hover {
+      background: #e7ecff;
+    }
+
+    .empty-state {
+      padding: 16px;
+      font-size: 13px;
+      color: #777;
+    }
+
+    .form-card {
+      background: #f8f9ff;
+      border-radius: 14px;
+      padding: 16px 18px 18px;
+      border: 1px solid #e0e3ff;
+    }
+
+    .form-card h2 {
+      margin: 0 0 8px;
+      font-size: 16px;
+    }
+
+    .form-card p {
+      margin: 0 0 16px;
+      font-size: 12px;
+      color: #666;
+    }
+
+    .form-group {
+      margin-bottom: 10px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 13px;
+      margin-bottom: 4px;
+      color: #444;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 8px 10px;
+      border-radius: 8px;
+      border: 1px solid #cfd3eb;
+      font-size: 13px;
+      outline: none;
+      background: #fff;
+    }
+
+    .form-group input:focus {
+      border-color: #1a4fd8;
+      box-shadow: 0 0 0 2px rgba(26,79,216,0.12);
+    }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 14px;
+      border-radius: 999px;
+      border: none;
+      background: #1a4fd8;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      gap: 6px;
+      transition: background 0.2s, transform 0.08s;
+    }
+
+    .btn-primary:hover {
+      background: #163fae;
+    }
+
+    .btn-primary:active {
+      transform: scale(0.98);
+    }
+
+    .status {
+      margin-top: 6px;
+      font-size: 12px;
+      min-height: 16px;
+    }
+
+    .status.ok {
+      color: #1a7c3a;
+    }
+
+    .status.error {
+      color: #c62828;
+    }
+
+    .badge-count {
+      font-size: 11px;
+      background: #eef1ff;
+      color: #1a4fd8;
+      border-radius: 999px;
+      padding: 2px 8px;
+      margin-left: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <h1>Panel administrativo</h1>
+    <p class="subtitle">Productos, empleados y clientes.</p>
+
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="productos">Productos <span id="count-productos" class="badge-count">0</span></button>
+      <button class="tab-btn" data-tab="empleados">Empleados <span id="count-empleados" class="badge-count">0</span></button>
+      <button class="tab-btn" data-tab="clientes">Clientes <span id="count-clientes" class="badge-count">0</span></button>
+    </div>
+
+    <div class="tab-content active" id="tab-productos">
+      <div class="tab-grid">
+        <div>
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Precio</th>
+                <th>Cantidad</th>
+                <th>SKU</th>
+                <th>Detalle</th>
+                <th>Categoria</th>
+                <th>Tipo empaque</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-productos">
+              <tr><td colspan="4" class="empty-state">Cargando productos...</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="form-card">
+          <h2>Nuevo producto</h2>
+          <p>Completa el formulario para crear un nuevo producto.</p>
+          <form id="form-producto">
+            <div class="form-group">
+              <label for="prod-nombre">Nombre</label>
+              <input type="text" id="prod-nombre" name="nombre" required />
+            </div>
+            <div class="form-group">
+              <label for="prod-precio">Precio</label>
+              <input type="number" step="0.01" id="prod-precio" name="precio" required />
+            </div>
+            <div class="form-group">
+              <label for="prod-cantidad">Cantidad</label>
+              <input type="number" id="prod-cantidad" name="cantidad" required />
+            </div>
+            <div class="form-group">
+              <label for="prod-nombre">SKU</label>
+              <input type="text" id="prod-sku" name="sku" required />
+            </div>
+            <div class="form-group">
+              <label for="prod-detalle">Detalle</label>
+              <input type="text" id="prod-detalle" name="detalle" required />
+            </div>
+            <div class="form-group">
+              <label for="prod-nombre">Categoria</label>
+              <input type="text" id="prod-categoria" name="categoria" required />
+            </div>
+            <div class="form-group">
+              <label for="prod-nombre">Tipo empaque</label>
+              <input type="text" id="prod-categoria" name="tipoEmpaque" required />
+            </div>
+            <button type="submit" class="btn-primary">
+              <span>＋</span> Crear producto
+            </button>
+            <div class="status" id="status-producto"></div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-content" id="tab-empleados">
+      <div class="tab-grid">
+        <div>
+          <table>
+            <thead>
+              <tr>
+               <th>ID</th>
+                <th>Nombre</th>
+                <th>CI</th>
+                <th>Celular</th>
+                <th>Cargo</th>
+                <th>Dirrecion</th>
+                <th>Correo</th>
+                <th>Estado civil</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-empleados">
+              <tr><td colspan="4" class="empty-state">Cargando empleados...</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="form-card">
+          <h2>Nuevo empleado</h2>
+          <p>Registra un nuevo empleado en el sistema.</p>
+          <form id="form-empleado">
+            <div class="form-group">
+              <label for="emp-nombre">Nombre</label>
+              <input type="text" id="emp-nombre" name="nombre" required />
+            </div>
+            <div class="form-group">
+              <label for="emp-ci">CI</label>
+              <input type="text" id="emp-ci" name="ci" required />
+            </div>
+            <div class="form-group">
+              <label for="emp-celular">Celular</label>
+              <input type="text" id="emp-celular" name="celular" required />
+            </div>
+            <div class="form-group">
+              <label for="emp-cargo">Cargo</label>
+              <input type="text" id="emp-cargo" name="cargo" required />
+            </div>
+            <div class="form-group">
+              <label for="emp-direccion">Direccion</label>
+              <input type="text" id="emp-direccion" name="direccionDomicilio" required />
+            </div>
+            
+            <div class="form-group">
+              <label for="emp-correo">Correo</label>
+              <input type="email" id="emp-correo" name="correo" required />
+            </div>
+            <div class="form-group">
+              <label for="emp-estadoCivil">Estado civil</label>
+              <input type="text" id="emp-estadoCivil" name="estadoCivil" required />
+            </div>
+            <button type="submit" class="btn-primary">
+              <span>＋</span> Crear empleado
+            </button>
+            <div class="status" id="status-empleado"></div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-content" id="tab-clientes">
+      <div class="tab-grid">
+        <div>
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>CI</th>
+                <th>Celular</th>
+                <th>NIT</th>
+                <th>Correo</th>
+                <th>Tipo cliente</th>
+                <th>Direccion</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-clientes">
+              <tr><td colspan="4" class="empty-state">Cargando clientes...</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="form-card">
+          <h2>Nuevo cliente</h2>
+          <p>Agrega un nuevo cliente a la base de datos.</p>
+          <form id="form-cliente">
+            <div class="form-group">
+              <label for="cli-nombre">Nombre</label>
+              <input type="text" id="cli-nombre" name="nombre" required />
+            </div>
+            <div class="form-group">
+              <label for="cli-ci">CI</label>
+              <input type="text" id="cli-ci" name="ci" required />
+            </div>
+            <div class="form-group">
+              <label for="cli-celular">Celular</label>
+              <input type="text" id="cli-celular" name="celular" required />
+            </div>
+            <div class="form-group">
+              <label for="cli-nit">NIT</label>
+              <input type="text" id="cli-nit" name="nit" required />
+            </div>
+            <div class="form-group">
+              <label for="cli-tipoCliente">Tipo cliente</label>
+              <input type="text" id="cli-tipoCliente" name="tipoCliente" required />
+            </div>
+             <div class="form-group">
+              <label for="cli-correo">Correo</label>
+              <input type="email" id="cli-correo" name="correo" required />
+            </div>           
+            <div class="form-group">
+              <label for="cli-direccion">Direccion</label>
+              <input type="text" id="cli-direccion" name="direccion" required />
+            </div>
+            <button type="submit" class="btn-primary">
+              <span>＋</span> Crear cliente
+            </button>
+            <div class="status" id="status-cliente"></div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_ENDPOINTS = {
+      productos: 'http://localhost:8930/api/producto',
+      empleados: 'http://localhost:8930/api/empleado',
+      clientes: 'http://localhost:8930/api/cliente'
+    };
+    const tabButtons = document.querySelectorAll('.tab-btn');
+    const tabContents = {
+      productos: document.getElementById('tab-productos'),
+      empleados: document.getElementById('tab-empleados'),
+      clientes: document.getElementById('tab-clientes')
+    };
+
+    tabButtons.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const tab = btn.dataset.tab;
+        tabButtons.forEach((b) => b.classList.toggle('active', b === btn));
+        Object.entries(tabContents).forEach(([key, el]) => {
+          el.classList.toggle('active', key === tab);
+        });
+
+        if (tab === 'productos') loadProductos();
+        if (tab === 'empleados') loadEmpleados();
+        if (tab === 'clientes') loadClientes();
+      });
+    });
+
+    async function fetchJSON(url, options = {}) {
+      const res = await fetch(url, {
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        ...options
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || 'Error en la petición');
+      }
+      return res.json();
+    }
+
+    const tbodyProductos = document.getElementById('tbody-productos');
+    const countProductos = document.getElementById('count-productos');
+    const statusProducto = document.getElementById('status-producto');
+    const formProducto = document.getElementById('form-producto');
+
+    async function loadProductos() {
+      try {
+        tbodyProductos.innerHTML = '<tr><td colspan="4" class="empty-state">Cargando productos...</td></tr>';
+        const data = await fetchJSON(API_ENDPOINTS.productos); // GET
+        console.log(data);
+        if (!Array.isArray(data.body) || data.body.length === 0) {
+          tbodyProductos.innerHTML = '<tr><td colspan="4" class="empty-state">No hay productos.</td></tr>';
+          countProductos.textContent = '0';
+          return;
+        }
+        countProductos.textContent = data.body.length.toString();
+        tbodyProductos.innerHTML = data.body.map((p) => `
+          <tr>
+            <td>${p.id ?? ''}</td>
+            <td>${p.nombre  ?? ''}</td>
+            <td>${p.precio  ?? ''}</td>
+            <td>${p.cantidad ?? ''}</td>
+            <td>${p.sku ?? ''}</td>
+            <td>${p.detalle ?? ''}</td>
+            <td>${p.categoria ?? ''}</td>
+            <td>${p.tipoEmpaque ?? ''}</td>
+          </tr>
+        `).join('');
+      } catch (err) {
+        console.error(err);
+        tbodyProductos.innerHTML = '<tr><td colspan="4" class="empty-state">Error al cargar productos.</td></tr>';
+      }
+    }
+
+    formProducto.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      statusProducto.textContent = '';
+      statusProducto.className = 'status';
+      const body = {
+        nombre: formProducto['nombre'].value,
+        precio: parseFloat(formProducto['precio'].value),
+        cantidad: parseFloat(formProducto['cantidad'].value),
+        sku: formProducto['sku'].value,
+        detalle: formProducto['detalle'].value,
+        categoria: formProducto['categoria'].value,
+        tipoEmpaque: formProducto['tipoEmpaque'].value,    
+      };
+      try {
+        await fetchJSON(API_ENDPOINTS.productos, {
+          method: 'POST',
+          body: JSON.stringify(body)
+        });
+        statusProducto.textContent = 'Producto creado correctamente.';
+        statusProducto.classList.add('ok');
+        formProducto.reset();
+        loadProductos();
+      } catch (err) {
+        console.error(err);
+        statusProducto.textContent = 'Error al crear el producto.';
+        statusProducto.classList.add('error');
+      }
+    });
+
+    const tbodyEmpleados = document.getElementById('tbody-empleados');
+    const countEmpleados = document.getElementById('count-empleados');
+    const statusEmpleado = document.getElementById('status-empleado');
+    const formEmpleado = document.getElementById('form-empleado');
+
+    async function loadEmpleados() {
+      try {
+        tbodyEmpleados.innerHTML = '<tr><td colspan="4" class="empty-state">Cargando empleados...</td></tr>';
+        const data = await fetchJSON(API_ENDPOINTS.empleados);
+        if (!Array.isArray(data.body) || data.body.length === 0) {
+          tbodyEmpleados.innerHTML = '<tr><td colspan="4" class="empty-state">No hay empleados.</td></tr>';
+          countEmpleados.textContent = '0';
+          return;
+        }
+
+        countEmpleados.textContent = data.body.length.toString();
+
+        tbodyEmpleados.innerHTML = data.body.map((e) => `
+          <tr>
+            <td>${e.id ?? ''}</td>
+            <td>${e.nombre ?? ''}</td>
+            <td>${e.ci ?? ''}</td>
+             <td>${e.celular ?? ''}</td>
+              <td>${e.cargo ?? ''}</td>
+               <td>${e.direccionDomicilio ?? ''}</td>
+                <td>${e.correo ?? ''}</td>
+            <td>${e.estadoCivil ?? ''}</td>
+          </tr>
+        `).join('');
+      } catch (err) {
+        console.error(err);
+        tbodyEmpleados.innerHTML = '<tr><td colspan="4" class="empty-state">Error al cargar empleados.</td></tr>';
+      }
+    }
+
+    formEmpleado.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      statusEmpleado.textContent = '';
+      statusEmpleado.className = 'status';
+      const body = {
+        nombre: formEmpleado['nombre'].value,
+        ci: formEmpleado['ci'].value,
+        celular: formEmpleado['celular'].value,
+        cargo: formEmpleado['cargo'].value,
+        direccionDomicilio: formEmpleado['direccionDomicilio'].value,
+        correo: formEmpleado['correo'].value,
+        estadoCivil: formEmpleado['estadoCivil'].value,
+      };
+
+      try {
+        await fetchJSON(API_ENDPOINTS.empleados, {
+          method: 'POST',
+          body: JSON.stringify(body)
+        });
+        statusEmpleado.textContent = 'Empleado creado correctamente.';
+        statusEmpleado.classList.add('ok');
+        formEmpleado.reset();
+        loadEmpleados();
+      } catch (err) {
+        console.error(err);
+        statusEmpleado.textContent = 'Error al crear el empleado.';
+        statusEmpleado.classList.add('error');
+      }
+    });
+
+    const tbodyClientes = document.getElementById('tbody-clientes');
+    const countClientes = document.getElementById('count-clientes');
+    const statusCliente = document.getElementById('status-cliente');
+    const formCliente = document.getElementById('form-cliente');
+
+    async function loadClientes() {
+      try {
+        tbodyClientes.innerHTML = '<tr><td colspan="4" class="empty-state">Cargando clientes...</td></tr>';
+        const data = await fetchJSON(API_ENDPOINTS.clientes);
+        if (!Array.isArray(data.body) || data.body.length === 0) {
+          tbodyClientes.innerHTML = '<tr><td colspan="4" class="empty-state">No hay clientes.</td></tr>';
+          countClientes.textContent = '0';
+          return;
+        }
+
+        countClientes.textContent = data.body.length.toString();
+
+        tbodyClientes.innerHTML = data.body.map((c) => `
+          <tr>
+            <td>${c.id ?? ''}</td>
+            <td>${c.nombre ?? ''}</td>
+            <td>${c.ci ?? ''}</td>
+            <td>${c.celular ?? ''}</td>
+            <td>${c.nit ?? ''}</td>
+            <td>${c.correo ?? ''}</td>
+            <td>${c.tipoCliente ?? ''}</td>
+            <td>${c.direccion ?? ''}</td>
+          </tr>
+        `).join('');
+      } catch (err) {
+        console.error(err);
+        tbodyClientes.innerHTML = '<tr><td colspan="4" class="empty-state">Error al cargar clientes.</td></tr>';
+      }
+    }
+
+    formCliente.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      statusCliente.textContent = '';
+      statusCliente.className = 'status';
+      const body = {
+        nombre: formCliente['nombre'].value,
+        ci: formCliente['ci'].value,
+        celular: formCliente['celular'].value,
+        nit: formCliente['nit'].value,
+        correo: formCliente['correo'].value,
+        tipoCliente: formCliente['tipoCliente'].value,
+        direccion: formCliente['direccion'].value,
+      };
+
+      try {
+        await fetchJSON(API_ENDPOINTS.clientes, {
+          method: 'POST',
+          body: JSON.stringify(body)
+        });
+        statusCliente.textContent = 'Cliente creado correctamente.';
+        statusCliente.classList.add('ok');
+        formCliente.reset();
+        loadClientes();
+      } catch (err) {
+        console.error(err);
+        statusCliente.textContent = 'Error al crear el cliente.';
+        statusCliente.classList.add('error');
+      }
+    });
+    loadProductos();
+    loadClientes();
+    loadEmpleados();
+  </script>
+</body>
+</html>
